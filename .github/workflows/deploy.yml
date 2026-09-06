@@ -47,39 +47,41 @@ jobs:
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
             curl -sL --retry 5 --retry-delay 3 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
+          echo "=== Verify images ==="
+          find public/assets -name "*.webp" -size +1k | wc -l
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install dependencies (with retry)
         run: |
           cd site
           npm config set registry https://registry.npmmirror.com
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -20
+          for attempt in 1 2 3; do
+            echo "=== npm install attempt $attempt ==="
+            npm install --legacy-peer-deps --no-audit --no-fund && break
+            echo "Attempt $attempt failed, retrying..."
+            rm -rf node_modules
+            sleep 5
+          done
+          echo "=== Verify astro ==="
+          ls node_modules/.bin/astro && echo "astro found"
 
-      - name: Build
+      - name: Build (with retry)
         run: |
           cd site
-          echo "=== PWD before build ==="
-          pwd
-          echo "=== Running astro build ==="
-          npx astro build
-          BUILD_EXIT=$?
-          echo "=== Build exit code: $BUILD_EXIT ==="
-          echo "=== PWD after build ==="
-          pwd
-          echo "=== site/dist contents ==="
-          ls -la dist/ 2>&1 | head -20
-          echo "=== dist file count ==="
-          find dist -type f 2>/dev/null | wc -l
-          echo "=== Go back to root ==="
-          cd ..
-          pwd
-          echo "=== Root site/dist check ==="
-          ls -la site/dist/ 2>&1 | head -10
-          exit $BUILD_EXIT
+          for attempt in 1 2 3; do
+            echo "=== Build attempt $attempt ==="
+            npx astro build && break
+            echo "Build attempt $attempt failed, retrying..."
+            rm -rf dist .astro
+            sleep 5
+          done
+          echo "=== Verify dist ==="
+          ls -la dist/ | head -10
+          find dist -type f | wc -l
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
