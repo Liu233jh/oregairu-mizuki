@@ -27,55 +27,35 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
+          # Apply custom source files
           cp -r ../custom/src/* src/ 2>/dev/null || true
+          # Apply custom config files
           for f in package.json astro.config.mjs tsconfig.json svelte.config.js postcss.config.mjs; do
             [ -f "../custom/$f" ] && cp -f "../custom/$f" "$f"
           done
-          mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
-          cp -f ../custom/public/assets/desktop-banner/*.webp public/assets/desktop-banner/ 2>/dev/null || true
-          cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
-          cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
+          # Remove pnpm-specific files
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
+          echo "=== Site ready ==="
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install and Build with full error log
+      - name: Install dependencies
         run: |
           cd site
           npm config set registry https://registry.npmjs.org/
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -3
-          echo "=== npm install done at $(date) ==="
-          
-          npx astro build > /tmp/build.log 2>&1
-          BUILD_EXIT=$?
-          echo "Build exit: $BUILD_EXIT at $(date)"
-          
-          # Save full log
-          cp /tmp/build.log ../custom/build-error.log
-          echo "---" >> ../custom/build-error.log
-          echo "BUILD_EXIT=$BUILD_EXIT" >> ../custom/build-error.log
-          echo "dist_files=$(find dist -type f 2>/dev/null | wc -l)" >> ../custom/build-error.log
-          
-          # Also list all webp files for debugging
-          echo "---" >> ../custom/build-error.log
-          echo "WebP files:" >> ../custom/build-error.log
-          find public/assets -name "*.webp" -exec ls -la {} \; >> ../custom/build-error.log
-          
-          cd ../custom
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build-error.log
-          git commit -m "Build error log (exit=$BUILD_EXIT)" || true
-          git push || echo "git push failed"
-          exit $BUILD_EXIT
+          npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build
+        run: |
+          cd site
+          npx astro build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Deploy to gh-pages branch
-        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
