@@ -47,8 +47,6 @@ jobs:
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
             curl -sL --retry 5 --retry-delay 3 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
-          echo "=== Downloaded images ==="
-          find public/assets -name "*.webp" -exec ls -la {} \;
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -59,22 +57,30 @@ jobs:
         run: |
           cd site
           npm config set registry https://registry.npmmirror.com
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -30
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -20
 
       - name: Build
         run: |
           cd site
-          echo "=== Starting build ==="
-          npx astro build 2>&1 | tail -100
-          echo "=== Build exit code: $? ==="
-          echo "=== dist check ==="
-          ls -la dist/ | head -20
+          npx astro build 2>&1 | tail -30
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Verify dist and deploy
+        run: |
+          echo "=== Current dir ==="
+          pwd
+          echo "=== site/dist check ==="
+          ls -la site/dist/ 2>&1 | head -20
+          echo "=== dist file count ==="
+          find site/dist -type f | wc -l
+          echo "=== Copy dist to root for deployment ==="
+          cp -r site/dist ./dist
+          ls -la dist/ | head -10
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site/dist
+          publish_dir: ./dist
           force_orphan: true
