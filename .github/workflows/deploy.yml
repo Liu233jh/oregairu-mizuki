@@ -36,51 +36,26 @@ jobs:
           cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
-          echo "=== Custom images: $(find public/assets -name '*.webp' | wc -l) ==="
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install and Build with full logging
+      - name: Install dependencies
         run: |
           cd site
-          echo "=== Node: $(node --version), npm: $(npm --version) ==="
           npm config set registry https://registry.npmjs.org/
-          npm config set fetch-retries 3
-          
-          echo "=== npm install at $(date) ==="
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/build.log
-          NPM_EXIT=${PIPESTATUS[0]}
-          echo "npm install exit: $NPM_EXIT at $(date)" | tee -a /tmp/build.log
-          
-          if [ $NPM_EXIT -eq 0 ]; then
-            echo "=== astro build at $(date) ===" | tee -a /tmp/build.log
-            npx astro build 2>&1 | tee -a /tmp/build.log
-            BUILD_EXIT=${PIPESTATUS[0]}
-            echo "astro build exit: $BUILD_EXIT at $(date)" | tee -a /tmp/build.log
-            echo "dist files: $(find dist -type f 2>/dev/null | wc -l)" | tee -a /tmp/build.log
-          else
-            BUILD_EXIT=1
-            echo "Skipping build due to npm install failure" | tee -a /tmp/build.log
-          fi
-          
-          # Upload log
-          cp /tmp/build.log ../custom/build-debug.log
-          cd ../custom
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build-debug.log
-          git commit -m "Build debug log (npm=$NPM_EXIT build=$BUILD_EXIT)" || true
-          git push || true
-          
-          exit $BUILD_EXIT
+          npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build
+        run: |
+          cd site
+          npx astro build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Deploy to gh-pages branch
-        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
