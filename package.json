@@ -3,11 +3,29 @@
   "type": "module",
   "version": "9.0",
   "scripts": {
+    "sync-content": "node scripts/sync-content.js",
+    "init-content": "node scripts/init-content-repo.js",
+    "export-config": "node --experimental-transform-types scripts/export-config.mjs",
+    "predev": "node scripts/sync-content.js || true",
+    "prebuild": "node scripts/sync-content.js || true",
     "dev": "astro dev",
     "start": "astro dev",
+    "check": "astro check",
+    "update-anime": "node scripts/update-anime.mjs",
+    "update-bangumi": "node scripts/update-bangumi.mjs",
+    "update-bilibili": "node scripts/update-bilibili.mjs",
     "build": "astro build",
+    "submit": "node scripts/indexnow-submit.js",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "type-check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/markdown-enhancements.test.mjs tests/layout-regressions.test.mjs tests/image-loading.test.mjs tests/music-player-loading.test.mjs && node tests/crypto.test.mjs",
+    "prepare-fonts": "node scripts/prepare-fonts.mjs",
+    "check-fonts": "node scripts/check-font-loading.mjs",
+    "prepare-images": "node scripts/prepare-default-images.mjs",
+    "new-post": "node scripts/new-post.js",
+    "format": "biome format --write ./src",
+    "lint": "biome check --write ./src"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
@@ -82,6 +100,5 @@
     "hast-util-from-html": "2.0.3",
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^14.0.0"
-  },
-  "packageManager": "pnpm@11.5.3"
+  }
 }
