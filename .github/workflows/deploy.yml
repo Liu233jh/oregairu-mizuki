@@ -34,15 +34,10 @@ jobs:
           cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
           cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
           cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          # Clean up problematic configs
-          rm -f pnpm-lock.yaml
-          # Simplify .npmrc - remove manage-package-manager-versions
+          # Remove pnpm-specific files to use npm
+          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
+          # Create simple .npmrc for npm
           echo "registry=https://registry.npmjs.org/" > .npmrc
-          echo "strict-peer-dependencies=false" >> .npmrc
-          # Simplify pnpm-workspace.yaml
-          echo "allowBuilds:" > pnpm-workspace.yaml
-          echo "  esbuild: true" >> pnpm-workspace.yaml
-          echo "  sharp: true" >> pnpm-workspace.yaml
           ls -la
 
       - name: Download Oregairu custom images
@@ -63,23 +58,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
-      - name: Install dependencies
+      - name: Install dependencies with npm
         run: |
           cd site
           node --version
-          pnpm --version
-          pnpm install --no-frozen-lockfile 2>&1 | tail -60
+          npm --version
+          npm install 2>&1 | tail -80
 
       - name: Build
         run: |
           cd site
-          pnpm build 2>&1 | tail -80
+          npm run build 2>&1 | tail -100
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
