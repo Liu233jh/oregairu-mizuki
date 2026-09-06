@@ -62,9 +62,24 @@ jobs:
       - name: Build
         run: |
           cd site
-          npx astro build 2>&1 | tail -30
-          echo "=== Build done, dist contents ==="
-          ls -la dist/ | head -15
+          echo "=== PWD before build ==="
+          pwd
+          echo "=== Running astro build ==="
+          npx astro build
+          BUILD_EXIT=$?
+          echo "=== Build exit code: $BUILD_EXIT ==="
+          echo "=== PWD after build ==="
+          pwd
+          echo "=== site/dist contents ==="
+          ls -la dist/ 2>&1 | head -20
+          echo "=== dist file count ==="
+          find dist -type f 2>/dev/null | wc -l
+          echo "=== Go back to root ==="
+          cd ..
+          pwd
+          echo "=== Root site/dist check ==="
+          ls -la site/dist/ 2>&1 | head -10
+          exit $BUILD_EXIT
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
