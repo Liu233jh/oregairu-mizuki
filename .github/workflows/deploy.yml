@@ -36,7 +36,8 @@ jobs:
           cp -f ../custom/pnpm-workspace.yaml pnpm-workspace.yaml 2>/dev/null || true
           cp -f ../custom/.npmrc .npmrc 2>/dev/null || true
           cp -f ../custom/biome.json biome.json 2>/dev/null || true
-          ls -la
+          # Remove packageManager field to avoid version mismatch
+          sed -i '/"packageManager"/d' package.json
 
       - name: Download Oregairu custom images
         run: |
@@ -50,29 +51,28 @@ jobs:
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
             curl -sL --retry 3 --retry-delay 2 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
-          echo "=== Downloaded images ==="
-          find public/assets -name "*.webp" -exec ls -la {} \;
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
 
       - name: Install dependencies
         run: |
           cd site
-          pnpm --version
-          pnpm install --no-frozen-lockfile 2>&1 | tail -50
+          pnpm config set strict-peer-dependencies false
+          pnpm install --no-frozen-lockfile 2>&1 | tail -80
 
       - name: Build
         run: |
           cd site
-          pnpm build 2>&1 | tail -80
+          pnpm build 2>&1 | tail -100
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
