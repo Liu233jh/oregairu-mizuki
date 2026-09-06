@@ -27,7 +27,6 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
-          # Copy custom text files over original
           cp -r ../custom/src/* src/ 2>/dev/null || true
           cp -f ../custom/package.json package.json 2>/dev/null || true
           cp -f ../custom/astro.config.mjs astro.config.mjs 2>/dev/null || true
@@ -37,22 +36,19 @@ jobs:
           cp -f ../custom/pnpm-workspace.yaml pnpm-workspace.yaml 2>/dev/null || true
           cp -f ../custom/.npmrc .npmrc 2>/dev/null || true
           cp -f ../custom/biome.json biome.json 2>/dev/null || true
-          echo "=== Files in site ==="
           ls -la
-          echo "=== pnpm-lock.yaml exists? ==="
-          ls -la pnpm-lock.yaml 2>/dev/null || echo "NOT FOUND"
 
       - name: Download Oregairu custom images
         run: |
           cd site
-          TUNNEL="https://23b107423169f5.lhr.life"
+          TUNNEL="https://b809cb2bfc7edd.lhr.life"
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           for i in 1 2 3 4; do
-            curl -sL -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
-            curl -sL -o "public/assets/mobile-banner/$i.webp" "$TUNNEL/oregairu-images/mobile-banner/$i.webp"
+            curl -sL --retry 3 --retry-delay 2 -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
+            curl -sL --retry 3 --retry-delay 2 -o "public/assets/mobile-banner/$i.webp" "$TUNNEL/oregairu-images/mobile-banner/$i.webp"
           done
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
-            curl -sL -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
+            curl -sL --retry 3 --retry-delay 2 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
           echo "=== Downloaded images ==="
           find public/assets -name "*.webp" -exec ls -la {} \;
@@ -70,18 +66,13 @@ jobs:
       - name: Install dependencies
         run: |
           cd site
-          echo "=== pnpm version ==="
           pnpm --version
-          echo "=== Running pnpm install ==="
           pnpm install --no-frozen-lockfile 2>&1 | tail -50
-          echo "=== Install exit code: $? ==="
 
       - name: Build
         run: |
           cd site
-          echo "=== Running build ==="
           pnpm build 2>&1 | tail -80
-          echo "=== Build exit code: $? ==="
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
