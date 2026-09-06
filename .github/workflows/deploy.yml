@@ -37,6 +37,29 @@ jobs:
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
           echo "=== Site ready ==="
 
+      - name: Download oregairu images
+        run: |
+          cd site
+          mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
+          # Desktop banners
+          curl -sL "https://aka.doubaocdn.com/s/SAF9DaYCbR" -o public/assets/desktop-banner/1.webp
+          curl -sL "https://aka.doubaocdn.com/s/2VUeuUMUYp" -o public/assets/desktop-banner/2.webp
+          curl -sL "https://aka.doubaocdn.com/s/lf4tVVbttZ" -o public/assets/desktop-banner/3.webp
+          curl -sL "https://aka.doubaocdn.com/s/rg9vLOVsyL" -o public/assets/desktop-banner/4.webp
+          # Mobile banners
+          curl -sL "https://aka.doubaocdn.com/s/R0vPjfkUxp" -o public/assets/mobile-banner/1.webp
+          curl -sL "https://aka.doubaocdn.com/s/VbfV2Pv7kA" -o public/assets/mobile-banner/2.webp
+          curl -sL "https://aka.doubaocdn.com/s/ADmReYEdpQ" -o public/assets/mobile-banner/3.webp
+          curl -sL "https://aka.doubaocdn.com/s/c1TXb6OOj5" -o public/assets/mobile-banner/4.webp
+          # Anime covers
+          curl -sL "https://aka.doubaocdn.com/s/VHBwonIAwI" -o public/assets/anime/oregairu_s1.webp
+          curl -sL "https://aka.doubaocdn.com/s/pUueDpiIIL" -o public/assets/anime/oregairu_s2.webp
+          curl -sL "https://aka.doubaocdn.com/s/fcZIF8zxwg" -o public/assets/anime/oregairu_s3.webp
+          curl -sL "https://aka.doubaocdn.com/s/oawMiPyMax" -o public/assets/anime/oregairu_ova.webp
+          # Verify images
+          file public/assets/desktop-banner/*.webp public/assets/mobile-banner/*.webp public/assets/anime/*.webp
+          ls -la public/assets/desktop-banner/ public/assets/mobile-banner/ public/assets/anime/
+
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
