@@ -33,22 +33,14 @@ jobs:
           cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
           cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
           cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc package-lock.json
-
-      - name: Download Oregairu custom images
-        run: |
-          cd site
-          TUNNEL="https://6195c4e14b3eab.lhr.life"
+          # Copy custom images directly from repo
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
-          for i in 1 2 3 4; do
-            curl -sL --retry 5 --retry-delay 3 -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
-            curl -sL --retry 5 --retry-delay 3 -o "public/assets/mobile-banner/$i.webp" "$TUNNEL/oregairu-images/mobile-banner/$i.webp"
-          done
-          for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
-            curl -sL --retry 5 --retry-delay 3 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
-          done
+          cp -f ../custom/public/assets/desktop-banner/*.webp public/assets/desktop-banner/ 2>/dev/null || true
+          cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
+          cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
           echo "=== Verify images ==="
           find public/assets -name "*.webp" -size +1k | wc -l
+          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc package-lock.json
 
       - name: Setup Node
         uses: actions/setup-node@v4
