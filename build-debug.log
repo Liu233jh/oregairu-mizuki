@@ -7,19 +7,49 @@ npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and cont
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 1163 packages in 35s
-npm install exit: 0 at Sun Sep  6 18:07:21 UTC 2026
-=== astro build at Sun Sep  6 18:07:21 UTC 2026 ===
-[1m[31m[astro][39m[22m Unable to load your Astro config
-
-[vite] The requested module 'oddmisc' does not provide an export named 'oddmisc'
+added 1163 packages in 46s
+npm install exit: 0 at Sun Sep  6 18:16:57 UTC 2026
+=== Check oddmisc version ===
+  "version": "1.2.8",
+=== astro build at Sun Sep  6 18:16:57 UTC 2026 ===
+[33m[1m18:17:00[22m [WARN] [vite][39m Cannot optimize dependency: [36m@iconify/svelte[39m, present in client 'optimizeDeps.include'
+[2m18:17:01[22m [34m[content][39m Syncing content
+[2m18:17:02[22m [34m[content][39m Synced content
+[2m18:17:02[22m [34m[types][39m Generated [2m2.55s[22m
+[2m18:17:02[22m [34m[build][39m output: [34m"static"[39m
+[2m18:17:02[22m [34m[build][39m mode: [34m"static"[39m
+[2m18:17:02[22m [34m[build][39m directory: [34m/home/runner/work/oregairu-mizuki/oregairu-mizuki/site/dist/[39m
+[2m18:17:02[22m [34m[build][39m Collecting build info...
+[2m18:17:02[22m [34m[build][39m [32m✓ Completed in 2.73s.[39m
+[2m18:17:02[22m [34m[build][39m Building static entrypoints...
+[33m[1m18:17:06[22m [WARN] [astro-icon][39m Failed to load icons from "src/icons": ENOENT: no such file or directory, scandir 'src/icons/'
+[2m18:17:06[22m [34m[assets][39m Copying fonts (4 files)...
+[31m[1m18:17:06[22m [ERROR] [vite][39m [31m✗[39m Build failed in 3.84s
+[31m[NoImageMetadata][39m Could not process image metadata for `/home/runner/work/oregairu-mizuki/oregairu-mizuki/site/public/assets/anime/oregairu_s1.webp`.
+  [1mError reference:[22m
+    [36m[4mhttps://docs.astro.build/en/reference/errors/no-image-metadata/[24m[39m
   [1mLocation:[22m
-    [4m/home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:536:10[24m
+    [4m/home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11[24m
   [1mStack trace:[22m
-[2m    at analyzeImportedModDifference (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:536:10)
-    at ModuleRunner.cachedRequest (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1180:59)
-    at async ESModulesEvaluator.runInlinedModule (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1021:3)
-    at async ModuleRunner.cachedRequest (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1180:73)
-    at async loadConfigWithVite (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/core/config/vite-load.js:29:19)[22m
-astro build exit: 1 at Sun Sep  6 18:07:23 UTC 2026
-dist files: 0
+[2m    at imageMetadata (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11)
+    at async LoadPluginContextImpl.handler (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/vite-plugin-assets.js:273:33)
+    at async plugin.<computed> (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/bindingify-input-options-DrImMHKQ.mjs:2127:12)
+    at imageMetadata (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11)
+    at async LoadPluginContextImpl.handler (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/vite-plugin-assets.js:273:33)
+    at async plugin.<computed> (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/bindingify-input-options-DrImMHKQ.mjs:2127:12)
+    at imageMetadata (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11)
+    at async LoadPluginContextImpl.handler (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/vite-plugin-assets.js:273:33)
+    at async plugin.<computed> (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/bindingify-input-options-DrImMHKQ.mjs:2127:12)
+    at imageMetadata (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11)
+    at async LoadPluginContextImpl.handler (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/vite-plugin-assets.js:273:33)
+    at async plugin.<computed> (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/bindingify-input-options-DrImMHKQ.mjs:2127:12)
+    at imageMetadata (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/utils/metadata.js:8:11)
+    at async LoadPluginContextImpl.handler (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/assets/vite-plugin-assets.js:273:33)
+    at async plugin.<computed> (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/bindingify-input-options-DrImMHKQ.mjs:2127:12)
+    at aggregateBindingErrorsIntoJsError (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/error-BP8lJHle.mjs:48:18)
+    at #build (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/rolldown/dist/shared/rolldown-DfXO5K1m.mjs:133:34)
+    at async Object.build (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/chunks/node.js:34242:19)
+    at async Object.buildApp (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/chunks/node.js:34234:6)
+    at async viteBuild (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/core/build/static-build.js:68:3)[22m
+astro build exit: 1 at Sun Sep  6 18:17:07 UTC 2026
+dist files: 4
