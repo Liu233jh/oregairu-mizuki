@@ -96,8 +96,8 @@ export default defineConfig({
 			]
 		: [],
 
-	site: siteConfig.siteURL,
-	base: "/",
+	site: "https://liu233jh.github.io/oregairu-mizuki/",
+	base: "/oregairu-mizuki/",
 	trailingSlash: "always",
 	compressHTML: true,
 
@@ -238,7 +238,7 @@ export default defineConfig({
 				[
 					rehypeContentLinks,
 					{
-						siteUrl: siteConfig.siteURL,
+						siteUrl: "https://liu233jh.github.io/oregairu-mizuki/",
 						target: "_blank",
 						rel: ["nofollow", "noopener", "noreferrer"],
 					},
