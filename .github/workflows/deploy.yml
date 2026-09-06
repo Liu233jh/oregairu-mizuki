@@ -27,14 +27,12 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
-          # Apply custom text files
           cp -r ../custom/src/* src/ 2>/dev/null || true
           cp -f ../custom/package.json package.json 2>/dev/null || true
           cp -f ../custom/astro.config.mjs astro.config.mjs 2>/dev/null || true
           cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
           cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
           cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          # Remove pnpm-specific files
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc package-lock.json
 
       - name: Download Oregairu custom images
@@ -43,12 +41,14 @@ jobs:
           TUNNEL="https://c3dbf573f4e94b.lhr.life"
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           for i in 1 2 3 4; do
-            curl -sL --retry 3 --retry-delay 2 -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
-            curl -sL --retry 3 --retry-delay 2 -o "public/assets/mobile-banner/$i.webp" "$TUNNEL/oregairu-images/mobile-banner/$i.webp"
+            curl -sL --retry 5 --retry-delay 3 -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
+            curl -sL --retry 5 --retry-delay 3 -o "public/assets/mobile-banner/$i.webp" "$TUNNEL/oregairu-images/mobile-banner/$i.webp"
           done
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
-            curl -sL --retry 3 --retry-delay 2 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
+            curl -sL --retry 5 --retry-delay 3 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
+          echo "=== Downloaded images ==="
+          find public/assets -name "*.webp" -exec ls -la {} \;
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -59,12 +59,16 @@ jobs:
         run: |
           cd site
           npm config set registry https://registry.npmmirror.com
-          npm install --legacy-peer-deps --no-audit --no-fund
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -30
 
       - name: Build
         run: |
           cd site
-          npx astro build
+          echo "=== Starting build ==="
+          npx astro build 2>&1 | tail -100
+          echo "=== Build exit code: $? ==="
+          echo "=== dist check ==="
+          ls -la dist/ | head -20
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
