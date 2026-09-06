@@ -43,34 +43,39 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies and capture log
+      - name: Install and Build with full logging
         run: |
           cd site
           echo "=== Node: $(node --version), npm: $(npm --version) ==="
           npm config set registry https://registry.npmjs.org/
           npm config set fetch-retries 3
-          echo "=== Starting npm install at $(date) ==="
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/npm-install.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "=== npm install exit code: $EXIT_CODE at $(date) ==="
-          echo "EXIT_CODE=$EXIT_CODE" >> /tmp/npm-install.log
-          # Upload log as artifact by committing it
-          cp /tmp/npm-install.log ../custom/build-debug.log
+          
+          echo "=== npm install at $(date) ==="
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/build.log
+          NPM_EXIT=${PIPESTATUS[0]}
+          echo "npm install exit: $NPM_EXIT at $(date)" | tee -a /tmp/build.log
+          
+          if [ $NPM_EXIT -eq 0 ]; then
+            echo "=== astro build at $(date) ===" | tee -a /tmp/build.log
+            npx astro build 2>&1 | tee -a /tmp/build.log
+            BUILD_EXIT=${PIPESTATUS[0]}
+            echo "astro build exit: $BUILD_EXIT at $(date)" | tee -a /tmp/build.log
+            echo "dist files: $(find dist -type f 2>/dev/null | wc -l)" | tee -a /tmp/build.log
+          else
+            BUILD_EXIT=1
+            echo "Skipping build due to npm install failure" | tee -a /tmp/build.log
+          fi
+          
+          # Upload log
+          cp /tmp/build.log ../custom/build-debug.log
           cd ../custom
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add build-debug.log
-          git commit -m "Add npm install debug log (exit code $EXIT_CODE)" || true
+          git commit -m "Build debug log (npm=$NPM_EXIT build=$BUILD_EXIT)" || true
           git push || true
-          # Exit with npm install result
-          exit $EXIT_CODE
-
-      - name: Build
-        if: success()
-        run: |
-          cd site
-          npx astro build 2>&1 | tail -80
-          echo "=== dist files: $(find dist -type f | wc -l) ==="
+          
+          exit $BUILD_EXIT
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
