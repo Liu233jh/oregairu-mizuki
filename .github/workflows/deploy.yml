@@ -17,6 +17,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SHARP_IGNORE_GLOBAL_LIBVIPS: 1
+      SHARP_FORCE_GLIBC: 1
+      npm_config_legacy_peer_deps: true
+      npm_config_audit: false
+      npm_config_fund: false
     steps:
       - name: Checkout current repo (custom files)
         uses: actions/checkout@v4
@@ -28,72 +34,61 @@ jobs:
           set -e
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
-          # Apply custom source files
           cp -r ../custom/src/* src/ 2>/dev/null || true
-          # Apply custom config files
           for f in package.json astro.config.mjs tsconfig.json svelte.config.js postcss.config.mjs; do
             [ -f "../custom/$f" ] && cp -f "../custom/$f" "$f"
           done
-          # Copy custom images
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           cp -f ../custom/public/assets/desktop-banner/*.webp public/assets/desktop-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
-          # Remove pnpm-specific files that may break npm
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
-          echo "=== Files in site ==="
-          ls -la
-          echo "=== Custom images count ==="
-          find public/assets -name "*.webp" | wc -l
+          echo "=== Custom images: $(find public/assets -name '*.webp' | wc -l) ==="
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: site/package.json
 
       - name: Install dependencies
         run: |
           cd site
-          npm config set registry https://registry.npmmirror.com
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
+          # Use official npm registry with extended timeouts
+          npm config set registry https://registry.npmjs.org/
+          npm config set fetch-retries 10
+          npm config set fetch-retry-mintimeout 30000
+          npm config set fetch-retry-maxtimeout 180000
+          npm config set fetch-timeout 600000
           for attempt in 1 2 3 4 5; do
-            echo "=== npm install attempt $attempt ==="
-            if npm install --legacy-peer-deps --no-audit --no-fund --prefer-offline 2>&1; then
-              echo "npm install succeeded on attempt $attempt"
+            echo "=== npm install attempt $attempt at $(date) ==="
+            if npm install 2>&1 | tail -50; then
+              echo "SUCCESS: npm install completed on attempt $attempt"
               break
             fi
-            echo "Attempt $attempt failed, cleaning and retrying..."
-            rm -rf node_modules package-lock.json
-            sleep 10
+            echo "FAILED: attempt $attempt, exit code $?"
+            rm -rf node_modules package-lock.json ~/.npm/_cacache
+            sleep 15
           done
-          echo "=== Verify astro binary ==="
-          ls -la node_modules/.bin/astro 2>/dev/null && echo "astro found" || echo "astro NOT found"
-          echo "=== node_modules size ==="
-          du -sh node_modules 2>/dev/null || echo "no node_modules"
+          echo "=== astro binary: $(ls node_modules/.bin/astro 2>/dev/null && echo found || echo MISSING) ==="
+          echo "=== node_modules: $(du -sh node_modules 2>/dev/null | cut -f1) ==="
 
       - name: Build
         run: |
           cd site
           for attempt in 1 2 3; do
             echo "=== Build attempt $attempt ==="
-            if npx astro build 2>&1; then
-              echo "Build succeeded on attempt $attempt"
+            if npx astro build 2>&1 | tail -80; then
+              echo "SUCCESS: Build completed on attempt $attempt"
               break
             fi
-            echo "Build attempt $attempt failed, retrying..."
+            echo "FAILED: Build attempt $attempt"
             rm -rf dist .astro
             sleep 5
           done
-          echo "=== Verify dist ==="
-          ls -la dist/ | head -20
-          echo "=== Total files in dist ==="
-          find dist -type f | wc -l
+          echo "=== dist files: $(find dist -type f | wc -l) ==="
+          ls -la dist/ | head -15
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Deploy to gh-pages branch
         if: success()
