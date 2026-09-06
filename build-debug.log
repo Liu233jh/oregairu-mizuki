@@ -7,5 +7,19 @@ npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and cont
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 1163 packages in 33s
-EXIT_CODE=0
+added 1163 packages in 35s
+npm install exit: 0 at Sun Sep  6 18:07:21 UTC 2026
+=== astro build at Sun Sep  6 18:07:21 UTC 2026 ===
+[1m[31m[astro][39m[22m Unable to load your Astro config
+
+[vite] The requested module 'oddmisc' does not provide an export named 'oddmisc'
+  [1mLocation:[22m
+    [4m/home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:536:10[24m
+  [1mStack trace:[22m
+[2m    at analyzeImportedModDifference (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:536:10)
+    at ModuleRunner.cachedRequest (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1180:59)
+    at async ESModulesEvaluator.runInlinedModule (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1021:3)
+    at async ModuleRunner.cachedRequest (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/vite/dist/node/module-runner.js:1180:73)
+    at async loadConfigWithVite (file:///home/runner/work/oregairu-mizuki/oregairu-mizuki/site/node_modules/astro/dist/core/config/vite-load.js:29:19)[22m
+astro build exit: 1 at Sun Sep  6 18:07:23 UTC 2026
+dist files: 0
