@@ -25,59 +25,78 @@ jobs:
 
       - name: Clone original Mizuki repo and apply custom files
         run: |
+          set -e
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
+          # Apply custom source files
           cp -r ../custom/src/* src/ 2>/dev/null || true
-          cp -f ../custom/package.json package.json 2>/dev/null || true
-          cp -f ../custom/astro.config.mjs astro.config.mjs 2>/dev/null || true
-          cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
-          cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
-          cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          # Copy custom images directly from repo
+          # Apply custom config files
+          for f in package.json astro.config.mjs tsconfig.json svelte.config.js postcss.config.mjs; do
+            [ -f "../custom/$f" ] && cp -f "../custom/$f" "$f"
+          done
+          # Copy custom images
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           cp -f ../custom/public/assets/desktop-banner/*.webp public/assets/desktop-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
-          echo "=== Verify images ==="
-          find public/assets -name "*.webp" -size +1k | wc -l
-          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc package-lock.json
+          # Remove pnpm-specific files that may break npm
+          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
+          echo "=== Files in site ==="
+          ls -la
+          echo "=== Custom images count ==="
+          find public/assets -name "*.webp" | wc -l
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: site/package.json
 
-      - name: Install dependencies (with retry)
+      - name: Install dependencies
         run: |
           cd site
           npm config set registry https://registry.npmmirror.com
-          for attempt in 1 2 3; do
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          for attempt in 1 2 3 4 5; do
             echo "=== npm install attempt $attempt ==="
-            npm install --legacy-peer-deps --no-audit --no-fund && break
-            echo "Attempt $attempt failed, retrying..."
-            rm -rf node_modules
-            sleep 5
+            if npm install --legacy-peer-deps --no-audit --no-fund --prefer-offline 2>&1; then
+              echo "npm install succeeded on attempt $attempt"
+              break
+            fi
+            echo "Attempt $attempt failed, cleaning and retrying..."
+            rm -rf node_modules package-lock.json
+            sleep 10
           done
-          echo "=== Verify astro ==="
-          ls node_modules/.bin/astro && echo "astro found"
+          echo "=== Verify astro binary ==="
+          ls -la node_modules/.bin/astro 2>/dev/null && echo "astro found" || echo "astro NOT found"
+          echo "=== node_modules size ==="
+          du -sh node_modules 2>/dev/null || echo "no node_modules"
 
-      - name: Build (with retry)
+      - name: Build
         run: |
           cd site
           for attempt in 1 2 3; do
             echo "=== Build attempt $attempt ==="
-            npx astro build && break
+            if npx astro build 2>&1; then
+              echo "Build succeeded on attempt $attempt"
+              break
+            fi
             echo "Build attempt $attempt failed, retrying..."
             rm -rf dist .astro
             sleep 5
           done
           echo "=== Verify dist ==="
-          ls -la dist/ | head -10
+          ls -la dist/ | head -20
+          echo "=== Total files in dist ==="
           find dist -type f | wc -l
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Deploy to gh-pages branch
+        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
