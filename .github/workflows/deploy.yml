@@ -37,13 +37,14 @@ jobs:
           cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
 
-      - name: Re-encode WebP images for sharp compatibility
+      - name: Re-encode WebP images
         run: |
           cd site
-          pip install Pillow -q
+          pip install Pillow -q 2>&1 | tail -2
           python3 << 'EOF'
           from PIL import Image
           import os
+          count = 0
           for root, dirs, files in os.walk('public/assets'):
               for f in files:
                   if f.endswith('.webp'):
@@ -52,9 +53,10 @@ jobs:
                           img = Image.open(path)
                           img = img.convert('RGB')
                           img.save(path, 'WEBP', quality=80, method=6)
-                          print(f'Re-encoded: {path} ({img.size})')
+                          count += 1
                       except Exception as e:
                           print(f'ERROR {path}: {e}')
+          print(f'Re-encoded {count} WebP images')
           EOF
 
       - name: Setup Node 22
@@ -62,20 +64,39 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install and Build with full logging
         run: |
           cd site
           npm config set registry https://registry.npmjs.org/
-          npm install --legacy-peer-deps --no-audit --no-fund
-
-      - name: Build
-        run: |
-          cd site
-          npx astro build
+          echo "=== npm install at $(date) ==="
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -20
+          NPM_EXIT=${PIPESTATUS[0]}
+          echo "npm install exit: $NPM_EXIT at $(date)"
+          
+          if [ $NPM_EXIT -eq 0 ]; then
+            echo "=== astro build at $(date) ==="
+            npx astro build 2>&1 | tail -60
+            BUILD_EXIT=${PIPESTATUS[0]}
+            echo "astro build exit: $BUILD_EXIT at $(date)"
+            echo "dist files: $(find dist -type f 2>/dev/null | wc -l)"
+          else
+            BUILD_EXIT=1
+          fi
+          
+          # Upload log
+          echo "npm=$NPM_EXIT build=$BUILD_EXIT" > ../custom/build-status.txt
+          cd ../custom
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add build-status.txt
+          git commit -m "Build status: npm=$NPM_EXIT build=$BUILD_EXIT" || true
+          git push || true
+          exit $BUILD_EXIT
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Deploy to gh-pages branch
+        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
