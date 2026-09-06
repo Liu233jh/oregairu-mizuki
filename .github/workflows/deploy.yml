@@ -34,57 +34,34 @@ jobs:
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           cp -f ../custom/public/assets/desktop-banner/*.webp public/assets/desktop-banner/ 2>/dev/null || true
           cp -f ../custom/public/assets/mobile-banner/*.webp public/assets/mobile-banner/ 2>/dev/null || true
-          cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
+          # Temporarily skip anime images to test build
+          echo "=== Skipping anime images for build test ==="
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
-
-      - name: Re-encode WebP images
-        run: |
-          cd site
-          pip install Pillow -q 2>&1 | tail -2
-          python3 << 'EOF'
-          from PIL import Image
-          import os
-          count = 0
-          for root, dirs, files in os.walk('public/assets'):
-              for f in files:
-                  if f.endswith('.webp'):
-                      path = os.path.join(root, f)
-                      try:
-                          img = Image.open(path)
-                          img = img.convert('RGB')
-                          img.save(path, 'WEBP', quality=80, method=6)
-                          count += 1
-                      except Exception as e:
-                          print(f'ERROR {path}: {e}')
-          print(f'Re-encoded {count} WebP images')
-          EOF
+          echo "=== Images in public/assets ==="
+          find public/assets -name "*.webp" | wc -l
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install and Build with full logging
+      - name: Install and Build
         run: |
           cd site
           npm config set registry https://registry.npmjs.org/
           npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -5
           echo "=== npm install done ==="
-          
-          npx astro build > /tmp/build-full.log 2>&1
-          BUILD_EXIT=$?
+          npx astro build 2>&1 | tail -40
+          BUILD_EXIT=${PIPESTATUS[0]}
           echo "Build exit: $BUILD_EXIT"
-          
-          # Save full log to custom dir for upload
-          cp /tmp/build-full.log ../custom/build-full.log
-          echo "BUILD_EXIT=$BUILD_EXIT" >> ../custom/build-full.log
-          echo "dist files: $(find dist -type f 2>/dev/null | wc -l)" >> ../custom/build-full.log
-          
+          echo "dist files: $(find dist -type f 2>/dev/null | wc -l)"
+          # Save status
+          echo "BUILD_EXIT=$BUILD_EXIT" > ../custom/build-status.txt
           cd ../custom
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build-full.log
-          git commit -m "Full build log (exit=$BUILD_EXIT)" || true
+          git add build-status.txt
+          git commit -m "Build status (no anime images): $BUILD_EXIT" || true
           git push || true
           exit $BUILD_EXIT
         env:
