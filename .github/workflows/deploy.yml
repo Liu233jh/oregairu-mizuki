@@ -37,6 +37,26 @@ jobs:
           cp -f ../custom/public/assets/anime/*.webp public/assets/anime/ 2>/dev/null || true
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
 
+      - name: Re-encode WebP images for sharp compatibility
+        run: |
+          cd site
+          pip install Pillow -q
+          python3 << 'EOF'
+          from PIL import Image
+          import os
+          for root, dirs, files in os.walk('public/assets'):
+              for f in files:
+                  if f.endswith('.webp'):
+                      path = os.path.join(root, f)
+                      try:
+                          img = Image.open(path)
+                          img = img.convert('RGB')
+                          img.save(path, 'WEBP', quality=80, method=6)
+                          print(f'Re-encoded: {path} ({img.size})')
+                      except Exception as e:
+                          print(f'ERROR {path}: {e}')
+          EOF
+
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
