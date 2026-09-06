@@ -17,12 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      SHARP_IGNORE_GLOBAL_LIBVIPS: 1
-      SHARP_FORCE_GLIBC: 1
-      npm_config_legacy_peer_deps: true
-      npm_config_audit: false
-      npm_config_fund: false
     steps:
       - name: Checkout current repo (custom files)
         uses: actions/checkout@v4
@@ -31,7 +25,6 @@ jobs:
 
       - name: Clone original Mizuki repo and apply custom files
         run: |
-          set -e
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
           cp -r ../custom/src/* src/ 2>/dev/null || true
@@ -45,48 +38,54 @@ jobs:
           rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
           echo "=== Custom images: $(find public/assets -name '*.webp' | wc -l) ==="
 
-      - name: Setup Node
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Diagnose environment
+        run: |
+          echo "=== Node version ==="
+          node --version
+          echo "=== npm version ==="
+          npm --version
+          echo "=== OS info ==="
+          uname -a
+          echo "=== npm config ==="
+          npm config list
+          echo "=== package.json exists ==="
+          ls -la site/package.json
+          echo "=== package.json first 5 lines ==="
+          head -5 site/package.json
+          echo "=== Test npm registry connectivity ==="
+          curl -sI https://registry.npmjs.org/ | head -5
+          echo "=== Disk space ==="
+          df -h /tmp
+
+      - name: Install dependencies (verbose)
         run: |
           cd site
-          # Use official npm registry with extended timeouts
           npm config set registry https://registry.npmjs.org/
-          npm config set fetch-retries 10
-          npm config set fetch-retry-mintimeout 30000
-          npm config set fetch-retry-maxtimeout 180000
-          npm config set fetch-timeout 600000
-          for attempt in 1 2 3 4 5; do
-            echo "=== npm install attempt $attempt at $(date) ==="
-            if npm install 2>&1 | tail -50; then
-              echo "SUCCESS: npm install completed on attempt $attempt"
-              break
-            fi
-            echo "FAILED: attempt $attempt, exit code $?"
-            rm -rf node_modules package-lock.json ~/.npm/_cacache
-            sleep 15
-          done
-          echo "=== astro binary: $(ls node_modules/.bin/astro 2>/dev/null && echo found || echo MISSING) ==="
-          echo "=== node_modules: $(du -sh node_modules 2>/dev/null | cut -f1) ==="
+          npm config set fetch-retries 5
+          echo "=== Starting npm install at $(date) ==="
+          npm install --legacy-peer-deps --no-audit --no-fund --loglevel=verbose 2>&1 | tail -100
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== npm install exit code: $EXIT_CODE at $(date) ==="
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=== npm install FAILED, checking partial install ==="
+            ls node_modules 2>/dev/null | head -20 || echo "no node_modules"
+            du -sh node_modules 2>/dev/null || echo "no node_modules"
+          fi
+          exit $EXIT_CODE
 
       - name: Build
+        if: success()
         run: |
           cd site
-          for attempt in 1 2 3; do
-            echo "=== Build attempt $attempt ==="
-            if npx astro build 2>&1 | tail -80; then
-              echo "SUCCESS: Build completed on attempt $attempt"
-              break
-            fi
-            echo "FAILED: Build attempt $attempt"
-            rm -rf dist .astro
-            sleep 5
-          done
+          echo "=== Starting build at $(date) ==="
+          npx astro build 2>&1 | tail -80
+          echo "=== Build exit code: $? at $(date) ==="
           echo "=== dist files: $(find dist -type f | wc -l) ==="
-          ls -la dist/ | head -15
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
