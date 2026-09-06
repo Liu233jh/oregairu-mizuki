@@ -34,10 +34,8 @@ jobs:
           cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
           cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
           cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          # Remove pnpm-specific files to use npm
-          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc
-          # Create simple .npmrc for npm
-          echo "registry=https://registry.npmjs.org/" > .npmrc
+          # Remove pnpm-specific files
+          rm -f pnpm-lock.yaml pnpm-workspace.yaml .npmrc package-lock.json
           ls -la
 
       - name: Download Oregairu custom images
@@ -52,23 +50,35 @@ jobs:
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
             curl -sL --retry 3 --retry-delay 2 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
+          echo "Images downloaded:"
+          find public/assets -name "*.webp" -exec ls -la {} \;
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies with npm
+      - name: Install dependencies
         run: |
           cd site
           node --version
           npm --version
-          npm install 2>&1 | tail -80
+          # Use npm mirror for faster download
+          npm config set registry https://registry.npmmirror.com
+          echo "=== npm config ==="
+          npm config list
+          echo "=== Running npm install ==="
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -100
+          echo "=== npm install exit code: $? ==="
+          echo "=== node_modules check ==="
+          ls node_modules/.bin/astro 2>/dev/null && echo "astro found" || echo "astro NOT found"
 
       - name: Build
         run: |
           cd site
-          npm run build 2>&1 | tail -100
+          echo "=== Running build ==="
+          npx astro build 2>&1 | tail -100
+          echo "=== Build exit code: $? ==="
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
