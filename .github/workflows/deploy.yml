@@ -63,24 +63,14 @@ jobs:
         run: |
           cd site
           npx astro build 2>&1 | tail -30
+          echo "=== Build done, dist contents ==="
+          ls -la dist/ | head -15
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-
-      - name: Verify dist and deploy
-        run: |
-          echo "=== Current dir ==="
-          pwd
-          echo "=== site/dist check ==="
-          ls -la site/dist/ 2>&1 | head -20
-          echo "=== dist file count ==="
-          find site/dist -type f | wc -l
-          echo "=== Copy dist to root for deployment ==="
-          cp -r site/dist ./dist
-          ls -la dist/ | head -10
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./site/dist
           force_orphan: true
