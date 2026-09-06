@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /
+Allow: /$
+Allow: /posts/
+
+Sitemap: https://liu233jh.github.io/oregairu-mizuki/sitemap-index.xml

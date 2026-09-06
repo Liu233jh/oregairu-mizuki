@@ -1,0 +1,1 @@
+import"./translation.DdDCEPZW.js";import"./config.Ms8_g7dA.js";import"./date-utils.Bmm0A_hT.js";function a(r,e){return r.replace(/^\/|\/$/g,"").toLowerCase()===e.replace(/^\/|\/$/g,"").toLowerCase()}function o(...r){return r.join("/").replace(/\/+/g,"/")}function u(r){return o("","/oregairu-mizuki/",r)}export{u as n,a as t};
