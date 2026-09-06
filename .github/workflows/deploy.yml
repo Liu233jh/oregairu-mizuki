@@ -38,7 +38,7 @@ jobs:
       - name: Download Oregairu custom images
         run: |
           cd site
-          TUNNEL="https://c3dbf573f4e94b.lhr.life"
+          TUNNEL="https://6195c4e14b3eab.lhr.life"
           mkdir -p public/assets/desktop-banner public/assets/mobile-banner public/assets/anime
           for i in 1 2 3 4; do
             curl -sL --retry 5 --retry-delay 3 -o "public/assets/desktop-banner/$i.webp" "$TUNNEL/oregairu-images/desktop-banner/$i.webp"
