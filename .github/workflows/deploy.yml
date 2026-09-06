@@ -25,18 +25,8 @@ jobs:
 
       - name: Clone original Mizuki repo and apply custom files
         run: |
-          set -x
           git clone --depth 1 https://github.com/LyraVoid/Mizuki.git site
           cd site
-          echo "=== Original repo files ==="
-          ls -la
-          echo "=== pnpm-workspace.yaml ==="
-          cat pnpm-workspace.yaml 2>/dev/null || echo "NOT FOUND"
-          echo "=== .npmrc ==="
-          cat .npmrc 2>/dev/null || echo "NOT FOUND"
-          echo "=== package.json scripts ==="
-          cat package.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get('scripts',{}), indent=2)); print('packageManager:', d.get('packageManager','N/A'))"
-          
           # Apply custom text files
           cp -r ../custom/src/* src/ 2>/dev/null || true
           cp -f ../custom/package.json package.json 2>/dev/null || true
@@ -44,13 +34,16 @@ jobs:
           cp -f ../custom/tsconfig.json tsconfig.json 2>/dev/null || true
           cp -f ../custom/svelte.config.js svelte.config.js 2>/dev/null || true
           cp -f ../custom/postcss.config.mjs postcss.config.mjs 2>/dev/null || true
-          
-          # Remove problematic fields and lock file
-          sed -i '/"packageManager"/d' package.json
+          # Clean up problematic configs
           rm -f pnpm-lock.yaml
-          
-          echo "=== Modified package.json scripts ==="
-          cat package.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d.get('scripts',{}), indent=2))"
+          # Simplify .npmrc - remove manage-package-manager-versions
+          echo "registry=https://registry.npmjs.org/" > .npmrc
+          echo "strict-peer-dependencies=false" >> .npmrc
+          # Simplify pnpm-workspace.yaml
+          echo "allowBuilds:" > pnpm-workspace.yaml
+          echo "  esbuild: true" >> pnpm-workspace.yaml
+          echo "  sharp: true" >> pnpm-workspace.yaml
+          ls -la
 
       - name: Download Oregairu custom images
         run: |
@@ -64,8 +57,6 @@ jobs:
           for f in oregairu_s1 oregairu_s2 oregairu_s3 oregairu_ova; do
             curl -sL --retry 3 --retry-delay 2 -o "public/assets/anime/$f.webp" "$TUNNEL/oregairu-images/anime/$f.webp"
           done
-          echo "=== Downloaded images ==="
-          find public/assets -name "*.webp" -exec ls -la {} \;
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -81,26 +72,14 @@ jobs:
       - name: Install dependencies
         run: |
           cd site
-          echo "=== Node version ==="
           node --version
-          echo "=== pnpm version ==="
           pnpm --version
-          echo "=== Current dir ==="
-          pwd
-          ls -la
-          echo "=== Running pnpm install ==="
-          pnpm config set strict-peer-dependencies false
-          pnpm install --no-frozen-lockfile 2>&1
-          echo "=== pnpm install exit code: $? ==="
-          echo "=== node_modules exists? ==="
-          ls -la node_modules 2>/dev/null | head -5 || echo "node_modules NOT FOUND"
+          pnpm install --no-frozen-lockfile 2>&1 | tail -60
 
       - name: Build
         run: |
           cd site
-          echo "=== Running build ==="
-          pnpm build 2>&1
-          echo "=== Build exit code: $? ==="
+          pnpm build 2>&1 | tail -80
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
