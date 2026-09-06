@@ -68,28 +68,23 @@ jobs:
         run: |
           cd site
           npm config set registry https://registry.npmjs.org/
-          echo "=== npm install at $(date) ==="
-          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -20
-          NPM_EXIT=${PIPESTATUS[0]}
-          echo "npm install exit: $NPM_EXIT at $(date)"
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tail -5
+          echo "=== npm install done ==="
           
-          if [ $NPM_EXIT -eq 0 ]; then
-            echo "=== astro build at $(date) ==="
-            npx astro build 2>&1 | tail -60
-            BUILD_EXIT=${PIPESTATUS[0]}
-            echo "astro build exit: $BUILD_EXIT at $(date)"
-            echo "dist files: $(find dist -type f 2>/dev/null | wc -l)"
-          else
-            BUILD_EXIT=1
-          fi
+          npx astro build > /tmp/build-full.log 2>&1
+          BUILD_EXIT=$?
+          echo "Build exit: $BUILD_EXIT"
           
-          # Upload log
-          echo "npm=$NPM_EXIT build=$BUILD_EXIT" > ../custom/build-status.txt
+          # Save full log to custom dir for upload
+          cp /tmp/build-full.log ../custom/build-full.log
+          echo "BUILD_EXIT=$BUILD_EXIT" >> ../custom/build-full.log
+          echo "dist files: $(find dist -type f 2>/dev/null | wc -l)" >> ../custom/build-full.log
+          
           cd ../custom
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build-status.txt
-          git commit -m "Build status: npm=$NPM_EXIT build=$BUILD_EXIT" || true
+          git add build-full.log
+          git commit -m "Full build log (exit=$BUILD_EXIT)" || true
           git push || true
           exit $BUILD_EXIT
         env:
