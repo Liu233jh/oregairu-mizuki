@@ -42,20 +42,41 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install and Build with logging
         run: |
           cd site
           npm config set registry https://registry.npmjs.org/
-          npm install --legacy-peer-deps --no-audit --no-fund
-
-      - name: Build
-        run: |
-          cd site
-          npx astro build
+          echo "=== npm install at $(date) ==="
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/build.log
+          NPM_EXIT=${PIPESTATUS[0]}
+          echo "npm install exit: $NPM_EXIT at $(date)" | tee -a /tmp/build.log
+          
+          if [ $NPM_EXIT -eq 0 ]; then
+            echo "=== Check oddmisc version ===" | tee -a /tmp/build.log
+            cat node_modules/oddmisc/package.json | grep '"version"' | tee -a /tmp/build.log
+            echo "=== astro build at $(date) ===" | tee -a /tmp/build.log
+            npx astro build 2>&1 | tee -a /tmp/build.log
+            BUILD_EXIT=${PIPESTATUS[0]}
+            echo "astro build exit: $BUILD_EXIT at $(date)" | tee -a /tmp/build.log
+            echo "dist files: $(find dist -type f 2>/dev/null | wc -l)" | tee -a /tmp/build.log
+          else
+            BUILD_EXIT=1
+          fi
+          
+          # Upload log
+          cp /tmp/build.log ../custom/build-debug.log
+          cd ../custom
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add build-debug.log
+          git commit -m "Build log (npm=$NPM_EXIT build=$BUILD_EXIT)" || true
+          git push || true
+          exit $BUILD_EXIT
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Deploy to gh-pages branch
+        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
