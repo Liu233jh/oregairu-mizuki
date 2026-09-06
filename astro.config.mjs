@@ -105,6 +105,7 @@ export default defineConfig({
 
 	image: {
 		layout: "constrained",
+		endpoint: { enabled: false },
 	},
 
 	server: {
